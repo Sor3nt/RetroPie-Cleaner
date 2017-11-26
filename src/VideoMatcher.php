@@ -33,7 +33,7 @@ class VideoMatcher{
                 }
             }
 
-            if ($found === false){
+            if ($video !== '..' && $found === false){
                 $notInUse[] = $this->folder. '/' . $video;
             }
         }
