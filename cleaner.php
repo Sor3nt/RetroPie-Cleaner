@@ -5,14 +5,6 @@ include 'src/GameList.php';
 include 'src/VideoMatcher.php';
 include 'src/DuplicateMatcher.php';
 
-//the GameList Class loads the current gamelist.xml
-$gameList = new GameList();
-$status = $gameList->load();
-
-if ($status === false){
-    die('gamelist.xml not found in this directory');
-}
-
 $options = getopt(false, [
     "move-videos",
     "keep-only-usefull-roms",
@@ -32,7 +24,6 @@ if (isset($options['keep-only-usefull-roms'])){
         !isset($options['remove-japan'])
     );
 
-
     echo "Found " . count($removeList) . " not wanted items, move to ./unwanted-roms\n";
     @mkdir($folder . '/unwanted-roms');
     foreach ($removeList as $rom){
@@ -42,6 +33,15 @@ if (isset($options['keep-only-usefull-roms'])){
 }
 
 if (isset($options['move-videos'])){
+
+//the GameList Class loads the current gamelist.xml
+    $gameList = new GameList();
+    $status = $gameList->load();
+
+    if ($status === false){
+        die('gamelist.xml not found in this directory');
+    }
+
     $videoMatcher = new VideoMatcher();
     $unusedVideos = $videoMatcher->getUnusedVideos($gameList);
 
