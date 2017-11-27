@@ -15,7 +15,7 @@
 
     if (!file_exists('/usr/bin/cleaner')){
         echo "Create executabele /usr/bin/cleaner\n";
-        $executable = "php /opt/cleaner/cleaner.php";
+        $executable = "php /opt/cleaner/cleaner.php $@";
         file_put_contents('/usr/bin/cleaner', $executable);
 
         system('chmod +x /usr/bin/cleaner');

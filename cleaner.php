@@ -20,7 +20,7 @@ $folder = '.';
 if (isset($options['keep-only-usefull-roms'])){
     $dupMatcher = new DuplicateMatcher($folder);
     list($removeList, $keepList) = $dupMatcher->keep(
-        ['de', 'europe', 'usa'],
+        ['germany', 'de', 'europe', 'usa'],
         !isset($options['remove-japan'])
     );
 
