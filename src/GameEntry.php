@@ -4,6 +4,7 @@ class GameEntry {
 
     private $options = [];
     private $attributes = [];
+    var $removed = false;
 
     public function __construct($xmlEntry) {
         foreach ($xmlEntry as $key => $value) {
@@ -20,6 +21,10 @@ class GameEntry {
 
     public function get($key){
         return isset($this->options[$key]) ? $this->options[$key] : false;
+    }
+
+    public function remove(){
+        $this->removed = true;
     }
 
     public function set($key, $value){
@@ -48,6 +53,8 @@ class GameEntry {
     }
 
     public function toXml(){
+        if ($this->removed) return '';
+
         $xml = "\t<game ";
 
         if (count($this->attributes)){

@@ -24,6 +24,8 @@ class VideoMatcher{
 
             foreach ($gameList->get() as $game) {
 
+                if ($game->removed) continue;
+
                 if (
                     $game->get('video') !== false &&
                     basename($game->get('video') ) === $video

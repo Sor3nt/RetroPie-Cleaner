@@ -25,10 +25,33 @@ if (isset($options['keep-only-usefull-roms'])){
     );
 
     echo "Found " . count($removeList) . " not wanted items, move to ./unwanted-roms\n";
+
+    if (file_exists('gamelist.xml')){
+        echo "Remove unwanted game entries from gamelist.xml\n";
+
+        $gameList = new GameList();
+        $gameList->load();
+
+        foreach ($gameList->get() as $game) {
+            foreach ($removeList as $rom){
+                if ($game->get('path') == $folder . '/'. $rom){
+                    $game->remove();
+                }
+            }
+        }
+
+        moveUnusedVideos($gameList);
+
+        $gameList->backup();
+        $gameList->save();
+    }
+
     @mkdir($folder . '/unwanted-roms');
     foreach ($removeList as $rom){
         rename($folder . '/'. $rom, $folder . '/unwanted-roms/'. $rom);
     }
+
+
 
 }
 
@@ -41,6 +64,13 @@ if (isset($options['move-videos'])){
     if ($status === false){
         die('gamelist.xml not found in this directory');
     }
+
+    moveUnusedVideos($gameList);
+}
+
+function moveUnusedVideos(GameList $gameList){
+
+    if (!is_dir('videos')) return;
 
     $videoMatcher = new VideoMatcher();
     $unusedVideos = $videoMatcher->getUnusedVideos($gameList);
