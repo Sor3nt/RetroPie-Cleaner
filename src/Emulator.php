@@ -41,10 +41,47 @@ class Emulator {
         list($videoMapped, $videoNotAvailable, $unusedVideos) = $this->map('video');
         list($imageMapped, $imageNotAvailable, $unusedImages) = $this->map('image');
 
+        list($recVideoMapped) = $this->mapUnused('video');
+        list($recImageMapped) = $this->mapUnused('image');
+
+        array_merge($videoMapped, $recVideoMapped);
+        array_merge($imageMapped, $recImageMapped);
+
+
         return [
             [$imageMapped, $imageNotAvailable, $unusedImages],
             [$videoMapped, $videoNotAvailable, $unusedVideos]
         ];
+    }
+
+    public function mapUnused( $what ){
+        $matcher = new Matcher(
+            str_replace(
+                '{system}',
+                $this->emulator,
+                $this->paths[ $what == 'image' ? 'unusedImages' : 'unusedVideos' ]
+            )
+        );
+
+        list($mapped, $notAvailable) = $what == 'image' ? $matcher->mapImages($this->gameList) : $matcher->mapVideos($this->gameList);
+
+        /** @var GameEntry[] $mapped */
+        foreach ($mapped as $game) {
+            $fileRecover = $game->get($what);
+            $fileTarget = str_replace(
+                    '{system}',
+                    $this->emulator,
+                    $this->paths[ $what ]
+                ) . basename($fileRecover);
+
+            //move file from recovery to media folder
+            rename($fileRecover, $fileTarget);
+
+            //update the media url
+            $game->set($what, $fileTarget);
+        }
+
+        return [$mapped];
     }
 
     public function map( $what ){

@@ -23,9 +23,9 @@ include 'src/Log.php';
 $path = [
 
     //store here unwanted / unused stuff
-    'unwantedRoms' => '/home/pi/RetroPrie/check_roms/{system}/',
-    'unusedVideos' => '/home/pi/RetroPrie/check_roms/{system}/videos/',
-    'unusedImages' => '/home/pi/RetroPrie/check_roms/{system}/images/',
+    'unwantedRoms' => '/home/pi/RetroPie/check_roms/{system}/',
+    'unusedVideos' => '/home/pi/RetroPie/check_roms/{system}/videos/',
+    'unusedImages' => '/home/pi/RetroPie/check_roms/{system}/images/',
 
     //the folder with our roms (inside this folder we have all emulators like nes,snes,gb,gba...)
     'roms' => '/home/pi/RetroPie/roms/',
@@ -40,6 +40,8 @@ $path = [
         '/opt/retropie/configs/all/emulationstation/gamelists/{system}/gamelist.xml'
     ]
 ];
+
+
 
 $filters = [
     //we only want at first german source then europe and at least usa

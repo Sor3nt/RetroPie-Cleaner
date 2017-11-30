@@ -28,7 +28,7 @@ class Log{
 
     public function optionRemoved($files, $option, $reason) {
         $msg = [];
-        $msg[] = sprintf('Remove the option %s from % entries because %s', $option, count($files), $reason);
+        $msg[] = sprintf('Remove the option %s from %s entries because %s', $option, count($files), $reason);
         foreach ($files as $file) {
             $msg[] = ' => ' . $file;
         }
