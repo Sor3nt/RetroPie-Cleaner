@@ -15,15 +15,22 @@ class DuplicateMatcher{
         $this->roms = $roms;
     }
 
-    public function keep($countries = ['en'], $keepJapan = false){
+    public function filter($countries = ['en'], $keepJapan = false){
 
         $removeList = [];
         $keepList = [];
-        $games = $this->getDuplicatedRoms();
-        foreach ($games as $gameGroup) {
+
+        foreach ($this->groupRoms() as $gameGroup) {
             list($keep, $remove) = $this->detectCountryRom($gameGroup, $countries);
 
-            if ($keepJapan === false && strpos(strtolower($keep), 'japan') !== false){
+            if (
+                $keepJapan === false &&
+                (
+                    strpos(strtolower($keep), 'japan') !== false ||
+                    strpos(strtolower($keep), '(j)') !== false ||
+                    strpos(strtolower($keep), '[j]') !== false
+                )
+            ){
                 $remove[] = $keep;
                 $keep = false;
             }
@@ -37,7 +44,15 @@ class DuplicateMatcher{
 
     }
 
-    public function detectCountryRom( $gameGroup, $countries ){
+    public function move( $fileList, $moveTo ){
+
+        @mkdir($moveTo, 0777, true);
+        foreach ($fileList as $file){
+            rename($this->folder . '/'. $file, $moveTo. $file);
+        }
+    }
+
+    private function detectCountryRom( $gameGroup, $countries ){
 
         $keep = null;
         $remove = [];
@@ -51,17 +66,37 @@ class DuplicateMatcher{
                         $keep = $game;
                         break;
                     }
+                }else{
+                    preg_match('/\[.*' . $country . '.*\]/i', $game, $result);
+                    if (count($result)){
+                        if (is_null($keep)){
+                            $keep = $game;
+                            break;
+                        }
+                    }
                 }
             }
         }
 
         //we have not found our right version :/
         if (is_null($keep)){
-            //just keep the first version...
-            $keep = $gameGroup[0];
+
+            //we use the shortest game name
+            $len = 1000;
+            foreach ($gameGroup as $item) {
+                if (strlen($item) < $len){
+                    $len = strlen($item);
+                    $keep = $item;
+                }
+            }
+
+            //just in case...
+            if (is_null($keep)) $keep = $gameGroup[0];
         }
 
+        //prepare not wanted games
         foreach ($gameGroup as $game) {
+
             if ($game !== $keep && !in_array($game, $remove)){
                 $remove[] = $game;
             }
@@ -70,11 +105,11 @@ class DuplicateMatcher{
         return [$keep, $remove];
     }
 
-    public function getDuplicatedRoms( ){
+    private function groupRoms( ){
         $games = [];
         foreach ($this->roms as $game) {
-            $cleanName = $this->cleanName($game);
-            
+            $cleanName = Helper::cleanName($game);
+
             if (!isset($games[$cleanName])) $games[$cleanName] = [];
             $games[$cleanName][] = $game;
             
@@ -83,32 +118,5 @@ class DuplicateMatcher{
         return $games;
     }
 
-
-    private function cleanName($name){
-        // replace country code or years like "Megaman (U) (19XX).xxx"
-        $name = preg_replace('/\(.+\)/', '', $name);
-        $name = preg_replace('/\[.+\]/', '', $name);
-        $name = str_replace('&amp;', '', $name);
-        $name = str_replace('&', '', $name);
-        $name = str_replace(',', '', $name);
-        $name = str_replace('.', '', $name);
-        $name = str_replace(':', '', $name);
-        $name = str_replace('[', '', $name);
-        $name = str_replace(']', '', $name);
-        $name = str_replace('!', '', $name);
-        $name = str_replace('-', '', $name);
-        $name = str_replace('+', '', $name);
-        $name = str_replace('?', '', $name);
-        $name = str_replace('\'', '', $name);
-        $name = str_replace('&#39;', '', $name);
-        $name = strtolower(trim($name));
-
-        $name = str_replace('the ', '', $name);
-        $name = str_replace(' the', '', $name);
-
-        $name = str_replace(' ', '', $name);
-
-        return $name;
-    }
 
 }

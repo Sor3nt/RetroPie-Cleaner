@@ -7,13 +7,17 @@ class GameList {
     /** @var GameEntry[]  */
     private $games = [];
 
-    public $gameListXml = 'gamelist.xml';
+    public $gameListXml = null;
+    var $paths = null;
+    var $emulator = null;
 
+    public function __construct( $gameListXml, $emulator, $paths ) {
 
-    public function load( ){
+        $this->emulator = $emulator;
+        $this->paths = $paths;
+        $this->gameListXml = $gameListXml;
 
-        if (!file_exists($this->gameListXml)) return false;
-        $raw = file_get_contents($this->gameListXml);
+        $raw = file_get_contents($gameListXml);
         $xml = simplexml_load_string($raw);
 
         $array = json_decode(json_encode($xml),TRUE);
@@ -21,7 +25,7 @@ class GameList {
         if (isset($array['game']['path'])) $array['game'] = [$array['game']];
         foreach ($array['game'] as $game) {
             $entry = new GameEntry($game);
-            $this->games[ $entry->get('path') ] = $entry;
+            $this->add($entry);
         }
 
         return true;
@@ -32,12 +36,60 @@ class GameList {
         file_put_contents($this->gameListXml. '.' . time(), $raw);
     }
 
+    /**
+     * @return GameEntry[]
+     */
     public function get(){
-        return $this->games;
+        $result = [];
+        foreach ($this->games as $game) {
+            if ($game->removed) continue;
+            $result[] = $game;
+        }
+        return $result;
     }
 
-    public function set(GameEntry $gameEntry){
-        $this->games[ $gameEntry->get('path') ] = $gameEntry;
+    public function add(GameEntry $gameEntry){
+        $this->games[] = $gameEntry;
+    }
+
+
+    public function removeCorruptedEntries(){
+        $removed = [
+            'rom' => [],
+            'image' => [],
+            'video' => []
+        ];
+
+        foreach ($this->games as $game) {
+            if ($game->removed) continue;
+
+            $rom = $game->get('path');
+            if (substr($rom, 0, 2) === './'){
+                $rom = $this->paths['roms']  . $this->emulator . '/' . basename($rom);
+            }
+
+            // the rom is missed, K.O. remove the rom
+            if (!file_exists($rom)){
+                $game->remove();
+                $removed['rom'][] = $game;
+            }
+
+            foreach(['image', 'video'] as $media){
+                $mediaFile = $game->get($media);
+                if (substr($mediaFile, 0, 2) === './'){
+                    $mediaFolder = str_replace('{system}', $this->emulator, $this->paths[$media]);
+                    $mediaFile = $mediaFolder . basename($mediaFile);
+                }
+
+                if (!file_exists($mediaFile)){
+                    $game->delete($media);
+                    $removed[$media][] = basename($mediaFile);
+                }
+
+            }
+        }
+
+        return $removed;
     }
 
 
@@ -45,15 +97,19 @@ class GameList {
         $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
         $xml .= "<gameList>\n";
         foreach ($this->games as $game) {
-            $xml .= $game->toXml() . "\n";
+            $gameXml = $game->toXml();
+            if ($gameXml){
+                $xml .= $game->toXml() . "\n";
+            }
         }
         $xml .= '</gameList>';
 
         return $xml;
     }
 
-    public function save($file = 'gamelist.xml'){
-        file_put_contents($file, $this->toXml());
+    public function save($backup = true){
+        if($backup) $this->backup();
+        file_put_contents($this->gameListXml, $this->toXml());
     }
 
 }
