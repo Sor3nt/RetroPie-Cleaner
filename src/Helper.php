@@ -12,6 +12,11 @@ class Helper{
 
     static function cleanName($name){
 
+        $name = substr($name, 0, strrpos($name, '.'));
+
+        //the downloaded files from the scraper has -image in it, for recovery reason we replace it always
+        $name = str_replace('-image', '', $name);
+
         $name = preg_replace(
             '/' .
             '\(.+\)|' .     //remove every content that inside round brackets

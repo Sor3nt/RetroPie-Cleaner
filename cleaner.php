@@ -19,7 +19,7 @@ include 'src/Log.php';
  * - logger in den helper schieben
  * - namespaces verbauen
  */
-
+//
 $path = [
 
     //store here unwanted / unused stuff
@@ -59,6 +59,15 @@ Helper::output(sprintf("Process \033[1;32m%s\033[0m Emulators", count($emulators
  * loop over every emulator
  */
 foreach ($emulators->get() as $emulator) {
+
+    if (
+        $emulator->emulator == 'psx' ||
+        $emulator->emulator == 'scummvm' ||
+        $emulator->emulator == 'port'
+    ){
+        Helper::output(sprintf("Skip \033[1;34m%s\033[0m", $emulator->emulator),1);
+        continue;
+    }
 
     Helper::output(sprintf("Emulator \033[1;34m%s\033[0m", $emulator->emulator),1);
     $logger->log[] = 'Process Emulator ' . $emulator->emulator;

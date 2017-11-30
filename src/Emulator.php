@@ -41,11 +41,8 @@ class Emulator {
         list($videoMapped, $videoNotAvailable, $unusedVideos) = $this->map('video');
         list($imageMapped, $imageNotAvailable, $unusedImages) = $this->map('image');
 
-        list($recVideoMapped) = $this->mapUnused('video');
-        list($recImageMapped) = $this->mapUnused('image');
-
-        array_merge($videoMapped, $recVideoMapped);
-        array_merge($imageMapped, $recImageMapped);
+        $videoMapped = array_merge($videoMapped, $this->mapUnused('video'));
+        $imageMapped = array_merge($imageMapped, $this->mapUnused('image'));
 
 
         return [
@@ -81,7 +78,7 @@ class Emulator {
             $game->set($what, $fileTarget);
         }
 
-        return [$mapped];
+        return $mapped;
     }
 
     public function map( $what ){
@@ -103,12 +100,13 @@ class Emulator {
         @mkdir($targetVideo, 0777, true);
         @mkdir($targetImages, 0777, true);
 
-        $files = scandir($folder);
-        unset($files[0]);
-        unset($files[1]);
+        if (!is_dir($folder)) return [];
+
+        $files = array_slice(scandir($folder), 2);
 
         if (count($files)){
             foreach ($files as $file){
+                if (is_dir($folder . $file)) continue;
 
                 //move already loaded previews to our rom video folder
                 if (substr($file, -4) === '.mp4'){

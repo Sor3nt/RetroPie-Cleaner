@@ -6,11 +6,10 @@ class Emulators {
 
     public function __construct( $paths ) {
 
-        $emulators = scandir($paths['roms']);
-        unset($emulators[0]);
-        unset($emulators[1]);
+        $emulators = array_slice(scandir($paths['roms']), 2);
 
         foreach ($emulators as $emulator) {
+            if (!is_dir($paths['roms'] . $emulator)) continue;
             $this->emulators[$emulator] = new Emulator($emulator, $paths);
         }
     }

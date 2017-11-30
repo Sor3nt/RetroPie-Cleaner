@@ -15,8 +15,7 @@ class CompareFileNames{
 
         $results = [];
         foreach ($dic as $entry) {
-            $romName = substr($entry, 0, strrpos($entry, '.'));
-            $romName = Helper::cleanName($romName);
+            $romName = Helper::cleanName($entry);
 
             $results[$romName] = $entry;
         }
@@ -26,8 +25,7 @@ class CompareFileNames{
 
     public function find( GameEntry $entry){
         $romFileName = basename($entry->get('path'));
-        $romName = substr($romFileName, 0, strrpos($romFileName, '.'));
-        $romName = Helper::cleanName($romName);
+        $romName = Helper::cleanName($romFileName);
 
         if (isset($this->dic[$romName])) return $this->dic[$romName] ;
 

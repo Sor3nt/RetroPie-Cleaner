@@ -3,16 +3,18 @@
 class DuplicateMatcher{
 
     var $folder;
-    var $roms;
+    var $roms = [];
 
     public function __construct( $folder = '.') {
         $this->folder = $folder;
 
-        $roms = scandir($folder);
-        unset($roms[0]);
-        unset($roms[1]);
+        $roms = array_slice(scandir($folder), 2);
 
-        $this->roms = $roms;
+        foreach ($roms as $rom) {
+            if (is_dir($folder . $rom)) continue;
+            $this->roms[] = $rom;
+        }
+
     }
 
     public function filter($countries = ['en'], $keepJapan = false){
