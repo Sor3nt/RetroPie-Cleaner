@@ -19,8 +19,7 @@ class Log{
         $msg = [];
         $msg[] = sprintf('Remove %s gamelist.xml entries because %s', count($files), $reason);
         foreach ($files as $file) {
-            list($source, $target) = $file;
-            $msg[] = ' => ' . $file;
+            $msg[] = ' => ' . basename($file);
         }
 
         $this->log[] = implode("\n", $msg);
