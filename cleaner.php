@@ -23,29 +23,22 @@ include 'src/Log.php';
 $path = [
 
     //store here unwanted / unused stuff
-    'unwantedRoms' => '/Users/matthias.friedrich/www/privat/RetroPie-Cleaner/vm/__unused/{system}/',
-//    'unwantedRoms' => '/home/pi/RetroPrie/check_roms/{system}/',
-    'unusedVideos' => '/Users/matthias.friedrich/www/privat/RetroPie-Cleaner/vm/__unused/{system}/videos/',
-    'unusedImages' => '/Users/matthias.friedrich/www/privat/RetroPie-Cleaner/vm/__unused/{system}/images/',
-//    'unusedVideos' => '/home/pi/RetroPie/check_roms/{system}/videos/',
+    'unwantedRoms' => '/home/pi/RetroPrie/check_roms/{system}/',
+    'unusedVideos' => '/home/pi/RetroPrie/check_roms/{system}/videos/',
+    'unusedImages' => '/home/pi/RetroPrie/check_roms/{system}/images/',
 
     //the folder with our roms (inside this folder we have all emulators like nes,snes,gb,gba...)
-    'roms' => '/Users/matthias.friedrich/www/privat/RetroPie-Cleaner/vm/emulators/',
-//    'emulators' => '/home/pi/RetroPie/roms/',
+    'roms' => '/home/pi/RetroPie/roms/',
 
-    'video' => '/Users/matthias.friedrich/www/privat/RetroPie-Cleaner/vm/emulators/{system}/videos/',
-    'image' => '/Users/matthias.friedrich/www/privat/RetroPie-Cleaner/vm/emulators/{system}/images/',
-//    'video' => '/home/pi/RetroPie/roms/{system}/videos/',
+    'video' => '/home/pi/RetroPie/roms/{system}/videos/',
+    'image' => '/home/pi/RetroPie/roms/{system}/images/',
 
-    'downloads' => '/Users/matthias.friedrich/www/privat/RetroPie-Cleaner/vm//downloaded_images/{system}/',
-//    'imagesSystem' => '/opt/retropie/configs/all/emulationstation/downloaded_images/{system}/',
+    'downloads' => '/opt/retropie/configs/all/emulationstation/downloaded_images/{system}/',
 
     'gameList' => [
-        '/Users/matthias.friedrich/www/privat/RetroPie-Cleaner/vm/emulators/{system}/gamelist.xml',
-        '/Users/matthias.friedrich/www/privat/RetroPie-Cleaner/vm/system/{system}/gamelist.xml'
-
+        '/home/pi/RetroPie/roms/{system}/gamelist.xml',
+        '/opt/retropie/configs/all/emulationstation/gamelists/{system}/gamelist.xml'
     ]
-
 ];
 
 $filters = [
