@@ -10,11 +10,14 @@ class Matcher{
     public function __construct( $folder) {
         $this->folder = $folder;
 
-        $files = array_slice(scandir($folder), 2);
+        $files = [];
+        if (is_dir($folder)){
+            $files = array_slice(scandir($folder), 2);
 
-        foreach ($files as $file) {
-            if (is_dir($folder . $file)) continue;
-            $this->files[] = $file;
+            foreach ($files as $file) {
+                if (is_dir($folder . $file)) continue;
+                $this->files[] = $file;
+            }
         }
 
         $this->compare = new CompareFileNames($files);
