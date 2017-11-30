@@ -30,7 +30,6 @@ class Log{
         $msg = [];
         $msg[] = sprintf('Remove the option %s from % entries because %s', $option, count($files), $reason);
         foreach ($files as $file) {
-            list($source, $target) = $file;
             $msg[] = ' => ' . $file;
         }
 
