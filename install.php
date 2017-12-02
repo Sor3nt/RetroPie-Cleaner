@@ -18,6 +18,7 @@
     copy('src/Helper.php', '/opt/cleaner/src/Helper.php');
     copy('src/Log.php', '/opt/cleaner/src/Log.php');
     copy('src/Matcher.php', '/opt/cleaner/src/Matcher.php');
+    copy('src/System.php', '/opt/cleaner/src/System.php');
 
     if (!file_exists('/usr/bin/cleaner')){
         echo "Create executabele /usr/bin/cleaner\n";
