@@ -11,7 +11,7 @@
 
     copy('src/CompareFileNames.php', '/opt/cleaner/src/CompareFileNames.php');
     copy('src/DuplicateMatcher.php', '/opt/cleaner/src/DuplicateMatcher.php');
-    copy('src/Emulator.php', '/opt/cleaner/src/Emulator.php');
+    copy('src/System.php', '/opt/cleaner/src/System.php');
     copy('src/Emulators.php', '/opt/cleaner/src/Emulators.php');
     copy('src/GameEntry.php', '/opt/cleaner/src/GameEntry.php');
     copy('src/GameList.php', '/opt/cleaner/src/GameList.php');

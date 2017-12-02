@@ -2,22 +2,28 @@
 
 class Emulator {
 
-    var $emulator = 'nes';
-    var $romLocation = null;
-    var $paths = null;
-
-    private $gameListLocation = null;
-
     /** @var GameList|bool */
     private $gameList = false;
+    private $path = null;
 
-    public function __construct( $emulator, $paths ) {
-        $this->paths = $paths;
-        $this->emulator = $emulator;
-        $this->romLocation = $paths['roms']  . $this->emulator . '/';
+    public $gameListLocation = null;
+    public $allowedExtensions = null;
+    public $platform = null;
 
-        foreach ($paths['gameList'] as $gameListLocation) {
-            $location = str_replace('{system}', $emulator, $gameListLocation);
+    public function __construct( $emulator, $path ) {
+
+        $this->path = $path;
+        $this->romLocation = $emulator['path'];
+
+        if (DEBUG_VM){
+            $this->romLocation = 'vm' . $this->romLocation;
+        }
+
+        $this->platform = $emulator['platform'];
+        $this->allowedExtensions = array_unique(explode(' ', strtolower($emulator['extension'])));
+
+        foreach ($path['gameList'] as $gameListLocation) {
+            $location = $gameListLocation . $this->platform . '/gamelist.xml';
 
             if (file_exists($location)){
                 $this->gameListLocation = $location;
@@ -26,7 +32,7 @@ class Emulator {
         }
 
         if (!is_null($this->gameListLocation)){
-            $this->gameList = new GameList( $this->gameListLocation, $this->emulator, $paths );
+            $this->gameList = new GameList( $this );
         }
     }
 
@@ -52,50 +58,57 @@ class Emulator {
     }
 
     public function mapUnused( $what ){
+        $sourceFolder = $this->path['unused'] . $this->platform . '/' . $what . 's/';
         $matcher = new Matcher(
-            str_replace(
-                '{system}',
-                $this->emulator,
-                $this->paths[ $what == 'image' ? 'unusedImages' : 'unusedVideos' ]
-            )
+            $sourceFolder
         );
 
-        list($mapped, $notAvailable) = $what == 'image' ? $matcher->mapImages($this->gameList) : $matcher->mapVideos($this->gameList);
+        list($mapped) = $what == 'image' ? $matcher->mapImages($this->gameList) : $matcher->mapVideos($this->gameList);
 
         /** @var GameEntry[] $mapped */
         foreach ($mapped as $game) {
             $fileRecover = $game->get($what);
-            $fileTarget = str_replace(
-                    '{system}',
-                    $this->emulator,
-                    $this->paths[ $what ]
-                ) . basename($fileRecover);
+            if ($fileRecover === false) continue;
+
+            if (substr($fileRecover, 0, 2) === './'){
+                $fileRecover = $sourceFolder . basename($fileRecover);
+            }
+
+            $fileTarget = $this->romLocation . '/' . $what . 's/' . basename($fileRecover);
 
             //move file from recovery to media folder
             rename($fileRecover, $fileTarget);
 
             //update the media url
-            $game->set($what, $fileTarget);
+            $game->set($what, './' . $what . 's/' . basename($fileRecover));
         }
 
         return $mapped;
     }
 
+
+
     public function map( $what ){
+
         $matcher = new Matcher(
-            str_replace('{system}', $this->emulator, $this->paths[ $what ])
+            $this->romLocation . '/' . $what . 's/'
         );
 
-        list($mapped, $notAvailable) = $what == 'image' ? $matcher->mapImages($this->gameList) : $matcher->mapVideos($this->gameList);
+        list($mapped, $notAvailable) =
+            $what == 'image' ?
+                $matcher->mapImages($this->gameList) :
+                $matcher->mapVideos($this->gameList)
+        ;
+
         $unused = $matcher->getUnused($this->gameList, $what);
 
         return [$mapped, $notAvailable, $unused];
     }
 
-    public function moveSystemDownloads(){
-        $folder = str_replace('{system}', $this->emulator, $this->paths['downloads']);
-        $targetVideo = str_replace('{system}', $this->emulator, $this->paths['video']);
-        $targetImages = str_replace('{system}', $this->emulator, $this->paths['image']);
+    public function moveSystemDownloads(GameList $gameList){
+        $folder = $this->path['downloads'] . $this->platform . '/';
+        $targetVideo = $this->romLocation . '/videos/';
+        $targetImages = $this->romLocation . '/images/';
 
         @mkdir($targetVideo, 0777, true);
         @mkdir($targetImages, 0777, true);

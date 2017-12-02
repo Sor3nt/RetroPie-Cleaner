@@ -5,42 +5,40 @@ include 'src/GameList.php';
 include 'src/Matcher.php';
 include 'src/DuplicateMatcher.php';
 include 'src/Emulator.php';
-include 'src/Emulators.php';
 include 'src/CompareFileNames.php';
 include 'src/Helper.php';
 include 'src/Log.php';
+include 'src/System.php';
 
 
 /**
  * TODO:
- * - vorhandene einträge in der xml checken ob video und image noch da is
- * -  create log (deleted, moved, missed...)
  * - settings auslagern in eine config file
  * - logger in den helper schieben
  * - namespaces verbauen
  */
-//
+
+const DEBUG_VM = false;
+
+$prepend = DEBUG_VM ? 'vm' : '';
+
 $path = [
 
-    //store here unwanted / unused stuff
-    'unwantedRoms' => '/home/pi/RetroPie/check_roms/{system}/',
-    'unusedVideos' => '/home/pi/RetroPie/check_roms/{system}/videos/',
-    'unusedImages' => '/home/pi/RetroPie/check_roms/{system}/images/',
+    'system' => [
+        $prepend . '/home/pi/.emulationstation/es_systems.cfg',
+        $prepend . '/etc/emulationstation/es_systems.cfg'
+    ],
 
-    //the folder with our roms (inside this folder we have all emulators like nes,snes,gb,gba...)
-    'roms' => '/home/pi/RetroPie/roms/',
+    'unused' => $prepend . '/home/pi/RetroPie/check_roms/',
 
-    'video' => '/home/pi/RetroPie/roms/{system}/videos/',
-    'image' => '/home/pi/RetroPie/roms/{system}/images/',
-
-    'downloads' => '/opt/retropie/configs/all/emulationstation/downloaded_images/{system}/',
+    'downloads' => $prepend . '/opt/retropie/configs/all/emulationstation/downloaded_images/',
 
     'gameList' => [
-        '/home/pi/RetroPie/roms/{system}/gamelist.xml',
-        '/opt/retropie/configs/all/emulationstation/gamelists/{system}/gamelist.xml'
+        $prepend . '/home/pi/RetroPie/roms/',
+        $prepend . '/opt/retropie/configs/all/emulationstation/gamelists/'
     ]
-];
 
+];
 
 
 $filters = [
@@ -52,71 +50,69 @@ $filters = [
 ];
 
 $logger = new Log();
-$emulators = new Emulators( $path );
-Helper::output(sprintf("Process \033[1;32m%s\033[0m Emulators", count($emulators->get())));
+$system = new System($path);
+
+Helper::output(sprintf("Process \033[1;32m%s\033[0m Emulators", count($system->get())));
 
 /**
  * loop over every emulator
  */
-foreach ($emulators->get() as $emulator) {
+foreach ($system->get() as $emulator) {
 
     if (
-        $emulator->emulator == 'psx' ||
-        $emulator->emulator == 'scummvm' ||
-        $emulator->emulator == 'port'
+        $emulator->platform == 'psx' ||
+        $emulator->platform == 'scummvm' ||
+        $emulator->platform == 'port'
     ){
-        Helper::output(sprintf("Skip \033[1;34m%s\033[0m", $emulator->emulator),1);
+        Helper::output(sprintf("Skip \033[1;34m%s\033[0m", $emulator->platform),1);
         continue;
     }
 
-    Helper::output(sprintf("Emulator \033[1;34m%s\033[0m", $emulator->emulator),1);
-    $logger->log[] = 'Process Emulator ' . $emulator->emulator;
+    Helper::output(sprintf("Emulator \033[1;34m%s\033[0m", $emulator->platform),1);
+    $logger->log[] = 'Process Emulator ' . $emulator->platform;
 
-    $movedFiles = $emulator->moveSystemDownloads();
-    if (count($movedFiles)){
-        $logger->movedFiles($movedFiles, 'these are stored inside the download folder');
-    }
 
     if ($emulator->has('gamelist')){
         $gameList = $emulator->getGameList();
 
-        $romsLocation = $emulator->romLocation;
+        $movedFiles = $emulator->moveSystemDownloads($gameList);
+
+        if (count($movedFiles)){
+            $logger->movedFiles($movedFiles, 'these are stored inside the download folder');
+        }
 
         /**
          * Find duplicated / unwanted roms
          */
-        $duplicateMatcher = new DuplicateMatcher( $romsLocation );
+        $duplicateMatcher = new DuplicateMatcher( $emulator );
         list($removeList, $keepList) = $duplicateMatcher->filter(
             $filters['keep'],
             $filters['keep-japan']
         );
 
         if (count($removeList)){
-
             /**
              * Move duplicated / unwanted roms
              */
             Helper::output(sprintf("Move \033[1;32m%s\033[0m unwanted Roms", count($removeList)), 2);
-            $moveTo = str_replace('{system}', $emulator->emulator, $path['unwantedRoms']);
-            $duplicateMatcher->move($removeList, $moveTo);
+            $duplicateMatcher->move($removeList, $path['unused'] . $emulator->platform . '/');
 
             $logger->movedFiles($removeList, 'these are duplicated');
 
             /**
              * Mark moved roms as deleted (xml)
              */
-            Helper::output(sprintf("Mark \033[1;32m%s\033[0m Roms as deleted", count($removeList)), 2);
             $xmlDeletedGames = [];
             foreach ($gameList->get() as $game) {
                 foreach ($removeList as $rom){
 
                     $realPath = str_replace(
                         './',
-                        $romsLocation . '/',
+                        $emulator->romLocation . '/',
                         $game->get('path')
                     );
 
-                    if ($realPath == $romsLocation . '/'. $rom){
+                    if ($realPath == $emulator->romLocation . '/'. $rom){
                         $xmlDeletedGames[] = $realPath;
                         $game->remove();
                     }
@@ -131,7 +127,6 @@ foreach ($emulators->get() as $emulator) {
         /**
          * Check the XML for old entries (entries with invalid roms, images or videos)
          */
-        Helper::output('Looking for corrupted entries', 2);
         $deleted = $gameList->removeCorruptedEntries();
 
         if (count($deleted['rom'])){
@@ -152,7 +147,6 @@ foreach ($emulators->get() as $emulator) {
         /**
          * Looking for games that miss a media mapping (video/image)
          */
-        Helper::output('Looking for games that miss a media mapping', 2);
         list($imageResult, $videoResult) = $emulator->mapImagesAndVideos();
 
         list($imageMapped, $imageNotAvailable, $unusedImages) = $imageResult;
@@ -168,7 +162,8 @@ foreach ($emulators->get() as $emulator) {
             Helper::output(sprintf("Move \033[1;32m%s\033[0m unused Videos", count($unusedVideos)), 2);
             $logger->movedFiles($unusedVideos, 'these videos are not in use');
 
-            $moveTo = str_replace('{system}', $emulator->emulator, $path['unusedVideos']);
+            //TODO : das hier verschieben in die klass rein...
+            $moveTo = $path['unused'] . $emulator->platform . '/videos/';
             @mkdir($moveTo, 0777, true);
             foreach ($unusedVideos as $file){
                 rename($file, $moveTo. basename($file));
@@ -182,7 +177,8 @@ foreach ($emulators->get() as $emulator) {
             Helper::output(sprintf("Move \033[1;32m%s\033[0m unused Images", count($unusedImages)), 2);
             $logger->movedFiles($unusedImages, 'these images are not in use');
 
-            $moveTo = str_replace('{system}', $emulator->emulator, $path['unusedImages']);
+            //TODO : das hier verschieben in die klass rein...
+            $moveTo = $path['unused'] . $emulator->platform . '/images/';
             @mkdir($moveTo, 0777, true);
             foreach ($unusedImages as $file){
                 rename($file, $moveTo. basename($file));

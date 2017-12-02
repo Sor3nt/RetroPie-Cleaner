@@ -5,7 +5,6 @@ class CompareFileNames{
     /** @var array */
     private $dic;
 
-
     public function __construct( $dic) {
 
         $this->dic = $this->prepareInput($dic);
@@ -31,10 +30,4 @@ class CompareFileNames{
 
         return false;
     }
-
-    private function exists( $name ){
-        $key = $name;
-        return isset($this->dic[$key]) ? true : false;
-    }
-
 }

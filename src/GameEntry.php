@@ -19,16 +19,13 @@ class GameEntry {
         }
 
         // add some empty fields to avoid outputting "Unknown"
-        if ($this->get('desc') === false) $this->addOption('desc', ' ');
-        if ($this->get('developer') === false) $this->addOption('developer', ' ');
-        if ($this->get('publisher') === false) $this->addOption('publisher', ' ');
-        if ($this->get('genre') === false) $this->addOption('genre', ' ');
-
-
+        foreach (['desc', 'developer', 'publisher', 'genre'] as $option) {
+            if ($this->get($option) === false) $this->addOption($option, '---');
+        }
     }
 
     public function get($key){
-        return isset($this->options[$key]) ? $this->options[$key] : false;
+        return isset($this->options[$key]) && !empty($this->options[$key]) ? $this->options[$key] : false;
     }
 
     public function remove(){

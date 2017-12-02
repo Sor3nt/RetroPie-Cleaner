@@ -34,7 +34,7 @@ class Matcher{
                 if ($video){
                     $mapped[] = $game;
                     $video = str_replace('&', '&amp;', $video);
-                    $game->set('video', realpath($this->folder . '/' . $video));
+                    $game->set('video',  './videos/' . $video);
                 }else{
                     $notAvailable[] = $game;
                 }
@@ -55,7 +55,7 @@ class Matcher{
                     $mapped[] = $game;
                     $video = str_replace('&', '&amp;', $video);
 
-                    $game->set('image', realpath($this->folder . '/' . $video));
+                    $game->set('image', './images/' . $video);
                 }else{
                     $notAvailable[] = $game;
                 }

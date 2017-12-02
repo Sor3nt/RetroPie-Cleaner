@@ -1,39 +1,38 @@
 <?php
 
-
-
 class GameList {
 
     /** @var GameEntry[]  */
     private $games = [];
 
-    public $gameListXml = null;
-    var $paths = null;
-    var $emulator = null;
+    /** @var Emulator */
+    public $emulator;
 
-    public function __construct( $gameListXml, $emulator, $paths ) {
+    public function __construct( Emulator $emulator ) {
 
         $this->emulator = $emulator;
-        $this->paths = $paths;
-        $this->gameListXml = $gameListXml;
 
-        $raw = file_get_contents($gameListXml);
-        $xml = simplexml_load_string($raw);
+        if (file_exists($emulator->gameListLocation)){
+            $raw = file_get_contents($emulator->gameListLocation);
+            $xml = simplexml_load_string($raw);
 
-        $array = json_decode(json_encode($xml),TRUE);
+            $array = json_decode(json_encode($xml),TRUE);
 
-        if (isset($array['game']['path'])) $array['game'] = [$array['game']];
-        foreach ($array['game'] as $game) {
-            $entry = new GameEntry($game);
-            $this->add($entry);
+            if (isset($array['game'])){
+                if (isset($array['game']['path'])) $array['game'] = [$array['game']];
+
+                foreach ($array['game'] as $game) {
+                    $this->games[] = new GameEntry($game);
+                }
+
+            }
+
         }
-
-        return true;
     }
 
     public function backup(){
-        $raw = file_get_contents($this->gameListXml);
-        file_put_contents($this->gameListXml. '.' . time(), $raw);
+        $raw = file_get_contents($this->emulator->gameListLocation);
+        file_put_contents($this->emulator->gameListLocation. '.' . time(), $raw);
     }
 
     /**
@@ -48,11 +47,10 @@ class GameList {
         return $result;
     }
 
-    public function add(GameEntry $gameEntry){
-        $this->games[] = $gameEntry;
-    }
 
-
+    /**
+     * @return array
+     */
     public function removeCorruptedEntries(){
         $removed = [
             'rom' => [],
@@ -63,26 +61,26 @@ class GameList {
         foreach ($this->games as $game) {
             if ($game->removed) continue;
 
-            $rom = $game->get('path');
-            if (substr($rom, 0, 2) === './'){
-                $rom = $this->paths['roms']  . $this->emulator . '/' . basename($rom);
-            }
+            $rom = $this->relativeToAbsolute($game->get('path'));
 
-            // the rom is missed, K.O. remove the rom
+
+            // the rom is missed, K.O. remove the entry
             if (!file_exists($rom)){
                 $game->remove();
-                $removed['rom'][] = $game;
+                $removed['rom'][] = basename($rom);
+                continue;
             }
 
-            foreach(['image', 'video'] as $media){
-                $mediaFile = $game->get($media);
-                if (substr($mediaFile, 0, 2) === './'){
-                    $mediaFolder = str_replace('{system}', $this->emulator, $this->paths[$media]);
-                    $mediaFile = $mediaFolder . basename($mediaFile);
-                }
+            foreach(['images', 'videos'] as $media){
+                $mediaFolder = $this->emulator->romLocation . '/' . $media . '/';
+
+                $mediaFile = $game->get($media == 'images' ? 'image' : 'video' );
+                if ($mediaFile == false) continue;
+
+                $mediaFile = $mediaFolder . basename($mediaFile);
 
                 if (!file_exists($mediaFile)){
-                    $game->delete($media);
+                    $game->delete($media == 'images' ? 'image' : 'video');
                     $removed[$media][] = basename($mediaFile);
                 }
 
@@ -92,15 +90,20 @@ class GameList {
         return $removed;
     }
 
+    private function relativeToAbsolute( $path ){
+        if (substr($path, 0, 2) === './'){
+            $path = $this->emulator->romLocation . '/' . basename($path);
+        }
+
+        return $path;
+    }
 
     public function toXml(){
         $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
         $xml .= "<gameList>\n";
         foreach ($this->games as $game) {
-            $gameXml = $game->toXml();
-            if ($gameXml){
-                $xml .= $game->toXml() . "\n";
-            }
+            if ($game->removed) continue;
+            $xml .= $game->toXml() . "\n";
         }
         $xml .= '</gameList>';
 
@@ -109,7 +112,7 @@ class GameList {
 
     public function save($backup = true){
         if($backup) $this->backup();
-        file_put_contents($this->gameListXml, $this->toXml());
+        file_put_contents($this->emulator->gameListLocation, $this->toXml());
     }
 
 }

@@ -5,16 +5,21 @@ class DuplicateMatcher{
     var $folder;
     var $roms = [];
 
-    public function __construct( $folder = '.') {
-        $this->folder = $folder;
+    public function __construct( Emulator $emulator ) {
+        $this->folder = $emulator->romLocation;
 
-        $roms = array_slice(scandir($folder), 2);
+        if (is_dir($this->folder)){
 
-        foreach ($roms as $rom) {
-            if (is_dir($folder . $rom)) continue;
-            $this->roms[] = $rom;
+            $roms = array_slice(scandir($this->folder), 2);
+
+            foreach ($roms as $rom) {
+                if (is_dir($this->folder . $rom)) continue;
+
+                if (in_array(strtolower(substr($rom, -4)), $emulator->allowedExtensions)){
+                    $this->roms[] = $rom;
+                }
+            }
         }
-
     }
 
     public function filter($countries = ['en'], $keepJapan = false){
@@ -43,7 +48,6 @@ class DuplicateMatcher{
         }
 
         return [$removeList, $keepList];
-
     }
 
     public function move( $fileList, $moveTo ){
@@ -119,6 +123,4 @@ class DuplicateMatcher{
 
         return $games;
     }
-
-
 }
