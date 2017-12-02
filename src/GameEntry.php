@@ -41,7 +41,11 @@ class GameEntry {
     }
 
     public function addOption($attr, $value){
-        $this->options[$attr] = $this->toHtmlXml1Encoding($value);
+        if ($attr === 'path' || $attr === 'video' || $attr === 'image'){
+            $this->options[$attr] = $value;
+        }else{
+            $this->options[$attr] = $this->toHtmlXml1Encoding($value);
+        }
     }
 
     private function toHtmlXml1Encoding( $value ){
