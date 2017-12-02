@@ -61,6 +61,7 @@ foreach ($system->get() as $emulator) {
 
     if (
         $emulator->platform == 'psx' ||
+        $emulator->platform == 'pc' ||
         $emulator->platform == 'scummvm' ||
         $emulator->platform == 'port'
     ){
