@@ -15,10 +15,6 @@ class Emulator {
         $this->path = $path;
         $this->romLocation = $emulator['path'];
 
-        if (DEBUG_VM){
-            $this->romLocation = 'vm' . $this->romLocation;
-        }
-
         $this->platform = $emulator['platform'];
         $this->allowedExtensions = array_unique(explode(' ', strtolower($emulator['extension'])));
 

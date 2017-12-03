@@ -14,8 +14,7 @@ class GameEntry {
             }
 
             if (is_array($value)) continue;
-
-            $this->addOption( $key, $value);
+            $this->options[$key] = $value;
         }
 
         // add some empty fields to avoid outputting "Unknown"
@@ -41,11 +40,9 @@ class GameEntry {
     }
 
     public function addOption($attr, $value){
-        if ($attr === 'path' || $attr === 'video' || $attr === 'image'){
-            $this->options[$attr] = $value;
-        }else{
-            $this->options[$attr] = $this->toHtmlXml1Encoding($value);
-        }
+        $this->options[$attr] = $this->toHtmlXml1Encoding($value);
+
+        var_dump($this->options[$attr]);
     }
 
     private function toHtmlXml1Encoding( $value ){
